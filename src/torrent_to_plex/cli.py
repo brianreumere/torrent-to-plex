@@ -30,28 +30,40 @@ def main(argv=sys.argv):
         movie_info = get_movie_info()
         # Create movie dir in destination
         dst_movie_dir = f"{config['movies']['dst_dir']}/{movie_info['title']} ({movie_info['year']})"
-        Path(config['movies']['dst_dir']).mkdir(exist_ok=True)
+        if not args.dry_run:
+            Path(config['movies']['dst_dir']).mkdir(exist_ok=True)
+        else:
+            logger.info(f"Would create directory {config['movies']['dst_dir']} but dry run is enabled")
         # Move movie and subtitles files (assume English) to destination
         if args.links:
             path = Path(
                 f"{dst_movie_dir}/{movie_info['title']} ({movie_info['year']}){movie_info['ext']}"
             )
-            if path.is_file() and args.overwrite:
+            if path.is_file() and args.overwrite and not args.dry_run:
+                logger.info(f"Overwrite is enabled, deleting existing file at {path}")
                 path.unlink()
+            elif path.is_file() and args.overwrite and args.dry_run:
+                logger.info(f"Overwrite is enabled, would delete existing file at {path} but dry run is also enabled")
             try:
                 if path.is_dir():
                     print(f"{path.name} is a directory. This is unsupported.")
                     pass
                 else:
-                    path.hardlink_to(movie_info["full_path"])
+                    if not args.dry_run:
+                        path.hardlink_to(movie_info["full_path"])
+                    else:
+                        logger.info(f"Would create new link at {path} but dry run is enabled")
             except FileExistsError:
                 print(f"{path.name} already exists.")
                 pass
         else:
-            shutil.copyfile(
-                movie_info["full_path"],
-                f"{dst_movie_dir}/{movie_info['title']} ({movie_info['year']}){movie_info['ext']}"
-            )
+            if not args.dry_run:
+                shutil.copyfile(
+                    movie_info["full_path"],
+                    f"{dst_movie_dir}/{movie_info['title']} ({movie_info['year']}){movie_info['ext']}"
+                )
+            else:
+                logger.info("Dry run is enabled, skipping copy")
         if movie_info["subtitles_file"]:
             if args.links:
                 path = Path(
@@ -60,24 +72,33 @@ def main(argv=sys.argv):
                         f"({movie_info['year']}).en{movie_info['subtitles_file_ext']}"
                     )
                 )
-                if path.is_file() and args.overwrite:
+                if path.is_file() and args.overwrite and not args.dry_run:
+                    logger.info(f"Overwrite is enabled, deleting existing file at {path}")
                     path.unlink()
+                elif path.is_file() and args.overwrite and args.dry_run:
+                    logger.info(f"Overwrite is enabled, would delete existing file at {path} but dry run is also enabled")
                 try:
                     if path.is_dir():
                         raise Exception(f"{path.name} is a directory. This is unsupported.")
                         pass
                     else:
-                        path.hardlink_to(f"{args.torrent_dir}/{args.torrent_name}/{movie_info['subtitles_file']}")
+                        if not args.dry_run:
+                            path.hardlink_to(f"{args.torrent_dir}/{args.torrent_name}/{movie_info['subtitles_file']}")
+                        else:
+                            logger.info(f"Would create new link at {path} but dry run is enabled")
                 except FileExistsError:
                     raise Exception(f"{path.name} already exists.")
             else:
-                shutil.copyfile(
-                    f"{args.torrent_dir}/{args.torrent_name}/{movie_info['subtitles_file']}",
-                    (
-                        f"{dst_movie_dir}/{movie_info['title']} "
-                        f"({movie_info['year']}).en{movie_info['subtitles_file_ext']}"
+                if not args.dry_run:
+                    shutil.copyfile(
+                        f"{args.torrent_dir}/{args.torrent_name}/{movie_info['subtitles_file']}",
+                        (
+                            f"{dst_movie_dir}/{movie_info['title']} "
+                            f"({movie_info['year']}).en{movie_info['subtitles_file_ext']}"
+                        )
                     )
-                )
+                else:
+                    logger.info("Dry run is enabled, skipping copy")
     elif args.torrent_dir == config["tv"]["src_dir"]:
         tv_eps = get_tv_eps()
         if len(tv_eps) > 0:
@@ -86,12 +107,18 @@ def main(argv=sys.argv):
                 dst_tv_show_dir = f"{config['tv']['dst_dir']}/{ep['show']}"
                 dst_tv_season_dir = f"{dst_tv_show_dir}/Season {ep['season']:02d}"
                 try:
-                    Path(dst_tv_show_dir).mkdir(exist_ok=True)
+                    if not args.dry_run:
+                        Path(dst_tv_show_dir).mkdir(exist_ok=True)
+                    else:
+                        logger.info(f"Would create directory {dst_tv_show_dir} but dry run is enabled")
                 except FileExistsError:
                     # If dir exists just continue
                     pass
                 try:
-                    Path(dst_tv_season_dir).mkdir(exist_ok=True)
+                    if not args.dry_run:
+                        Path(dst_tv_season_dir).mkdir(exist_ok=True)
+                    else:
+                        logger.info(f"Would create directory {dst_tv_season_dir} but dry run is enabled")
                 except FileExistsError:
                     # If dir exists just continue
                     pass
@@ -99,21 +126,30 @@ def main(argv=sys.argv):
                     path = Path(
                         f"{dst_tv_season_dir}/S{ep['season']:02d}E{ep['number']:02d}{ep['extension']}"
                     )
-                    if path.is_file() and args.overwrite:
+                    if path.is_file() and args.overwrite and not args.dry_run:
+                        logger.info(f"Overwrite is enabled, deleting existing file at {path}")
                         path.unlink()
+                    elif path.is_file() and args.overwrite and args.dry_run:
+                        logger.info(f"Overwrite is enabled, would delete existing file at {path} but dry run is also enabled")
                     try:
                         if path.is_dir():
                             raise Exception(f"{path.name} is a directory. This is unsupported.")
                             pass
                         else:
-                            path.hardlink_to(ep["file_path"])
+                            if not args.dry_run:
+                                path.hardlink_to(ep["file_path"])
+                            else:
+                                logger.info(f"Would create new link at {path} but dry run is enabled")
                     except FileExistsError:
                         raise Exception(f"{path.name} already exists.")
                 else:
-                    shutil.copyfile(
-                        ep["file_path"],
-                        f"{dst_tv_season_dir}/S{ep['season']:02d}E{ep['number']:02d}{ep['extension']}"
-                    )
+                    if not args.dry_run:
+                        shutil.copyfile(
+                            ep["file_path"],
+                            f"{dst_tv_season_dir}/S{ep['season']:02d}E{ep['number']:02d}{ep['extension']}"
+                        )
+                    else:
+                        logger.info("Dry run is enabled, skipping copy")
         else:
             raise Exception("No episodes found!")
 
