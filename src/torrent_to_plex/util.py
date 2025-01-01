@@ -90,6 +90,8 @@ def load_config(path: str):
                     config["extensions"]["archive"] = tuple(config["extensions"]["archive"])
                 except KeyError as e:
                     logger.error(f"Missing required configuration option: {e}")
+                    sys.exit(1)
+                return config
             except TOMLDecodeError as e:
                 logger.error(f"Could not decode config file at {path}: {e}")
                 sys.exit(1)
