@@ -1,0 +1,20 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [ "setuptools>=75.6" ]
+
+[project]
+name = "torrent-to-plex"
+version = "0.0.1"
+authors = [
+    { name = "Brian Reumere", email = "brian@mutualaid.info" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "parse-torrent-name @ git+https://github.com/brianreumere/parse-torrent-name.git@master"
+]
+
+[project.urls]
+Homepage = "https://github.com/brianreumere/torrent-to-plex"
+
+[project.scripts]
+ttp = "torrent_to_plex.cli:main"
