@@ -16,10 +16,13 @@ def setup_logger():
     logger = logging.getLogger(__name__)
     stream_handler = logging.StreamHandler()
     logger.addHandler(stream_handler)
-    syslog_handler = handlers.SysLogHandler()
-    # Include log level in messages to syslog
-    syslog_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
-    logger.addHandler(syslog_handler)
+    if Path("/dev/log").exists():
+        syslog_handler = handlers.SysLogHandler(address="/dev/log")
+        # Include log level in messages to syslog
+        syslog_handler.setFormatter(
+            logging.Formatter("%(processName)s[%(process)d]: %(levelname)s: %(message)s")
+        )
+        logger.addHandler(syslog_handler)
     # May be overriden later if the -v argument is used
     logger.setLevel("INFO")
     return logger
