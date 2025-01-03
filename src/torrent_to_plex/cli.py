@@ -31,9 +31,9 @@ def main(argv=sys.argv):
         # Create movie dir in destination
         dst_movie_dir = f"{config['movies']['dst_dir']}/{movie_info['title']} ({movie_info['year']})"
         if not args.dry_run:
-            Path(config['movies']['dst_dir']).mkdir(exist_ok=True)
+            Path(dst_movie_dir).mkdir(exist_ok=True)
         else:
-            logger.info(f"Would create directory {config['movies']['dst_dir']} but dry run is enabled")
+            logger.info(f"Would create directory {dst_movie_dir} but dry run is enabled")
         # Move movie and subtitles files (assume English) to destination
         if args.links:
             path = Path(

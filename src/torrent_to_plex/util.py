@@ -20,7 +20,7 @@ def setup_logger():
         syslog_handler = handlers.SysLogHandler(address="/dev/log")
         # Include log level in messages to syslog
         syslog_handler.setFormatter(
-            logging.Formatter("%(processName)s[%(process)d]: %(levelname)s: %(message)s")
+            logging.Formatter("ttp[%(process)d]: %(levelname)s: %(message)s")
         )
         logger.addHandler(syslog_handler)
     # May be overriden later if the -v argument is used
