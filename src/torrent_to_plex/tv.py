@@ -5,7 +5,7 @@ from pathlib import Path
 from torrent_to_plex.util import logger, extract_file
 
 
-def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year: str | None = None):
+def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year: str | None = None, season: str | None = None):
     eps = []
     if os.path.isdir(f"{dir}/{name}"):
         # Check for archive files and extract
@@ -25,6 +25,8 @@ def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year
                             ep_info["title"] = title
                         if year:
                             ep_info["year"] = year
+                        if season:
+                            ep_info["season"] = season
                         ep = {
                             "file_path": (
                                 f"{dir}/{name}/{entry.name}/{nested_entry.name}"

@@ -67,6 +67,11 @@ def parse_args(parser: argparse.ArgumentParser, args: list):
         help="Overwrite files in the destination if they already exist"
     )
     parser.add_argument(
+        "-s", "--season",
+        action="store",
+        help="Override the season of the TV show"
+    )
+    parser.add_argument(
         "-t", "--title",
         action="store",
         help="Override the title of the movie or TV show"
