@@ -62,6 +62,8 @@ def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year
                     }
                     logger.info(ep)
                     eps.append(ep)
+                    if episode:
+                        episode += 1
                     # Don't look for subtitles since TV torrents generally don't
                     # have them?
     elif (
