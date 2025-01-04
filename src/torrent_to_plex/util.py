@@ -55,6 +55,14 @@ def parse_args(parser: argparse.ArgumentParser, args: list):
         help="Perform a dry run and show what actions would be taken"
     )
     parser.add_argument(
+        "-e", "--episode",
+        action="store",
+        help=(
+            "Override the episode of the TV show (if multiple, this is used as the starting "
+            "episode number)"
+        )
+    )
+    parser.add_argument(
         "-l", "--links",
         action="store_true",
         default=True,

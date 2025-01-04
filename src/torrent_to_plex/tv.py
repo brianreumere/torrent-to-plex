@@ -5,7 +5,7 @@ from pathlib import Path
 from torrent_to_plex.util import logger, extract_file
 
 
-def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year: str | None = None, season: str | None = None):
+def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year: str | None = None, season: str | None = None, episode: int | None = None):
     eps = []
     if os.path.isdir(f"{dir}/{name}"):
         # Check for archive files and extract
@@ -27,6 +27,8 @@ def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year
                             ep_info["year"] = year
                         if season:
                             ep_info["season"] = season
+                        if episode:
+                            ep_info["episode"] = episode
                         ep = {
                             "file_path": (
                                 f"{dir}/{name}/{entry.name}/{nested_entry.name}"
@@ -38,6 +40,8 @@ def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year
                         }
                         logger.info(ep)
                         eps.append(ep)
+                        if episode:
+                            episode += 1
                     nested.close()
                 elif entry.name.endswith(config["extensions"]["video"]) and entry.is_file():
                     ep_info = {**PTN.parse(name), **PTN.parse(entry.name)}
@@ -47,6 +51,8 @@ def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year
                         ep_info["year"] = year
                     if season:
                         ep_info["season"] = season
+                    if episode:
+                        ep_info["episode"] = episode
                     ep = {
                         "file_path": f"{dir}/{name}/{entry.name}",
                         "extension": Path(entry.name).suffix,
@@ -63,6 +69,14 @@ def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year
         and f"{dir}/{name}".endswith(config["extensions"]["video"])
     ):
         ep_info = PTN.parse(name)
+        if title:
+            ep_info["title"] = title
+        if year:
+            ep_info["year"] = year
+        if season:
+            ep_info["season"] = season
+        if episode:
+            ep_info["episode"] = episode
         ep = {
             "file_path": f"{dir}/{name}",
             "extension": Path(f"{dir}/{name}").suffix,
