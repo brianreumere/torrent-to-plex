@@ -100,7 +100,7 @@ def main(argv=sys.argv):
                 else:
                     logger.info("Dry run is enabled, skipping copy")
     elif args.torrent_dir == config["tv"]["src_dir"]:
-        tv_eps = get_tv_eps(args.torrent_name, args.torrent_dir, config, title=args.title, year=args.year, season=args.season, episode=args.episode)
+        tv_eps = get_tv_eps(args.torrent_name, args.torrent_dir, config, title=args.title, year=args.year, season=args.season, episode=int(args.episode))
         if len(tv_eps) > 0:
             for ep in tv_eps:
                 # Create show and season dirs in destination
