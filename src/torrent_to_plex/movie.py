@@ -5,7 +5,7 @@ from pathlib import Path
 from torrent_to_plex.util import logger, extract_file
 
 
-def get_movie_info(name: str, dir: str, config: dict, title: str | None = None):
+def get_movie_info(name: str, dir: str, config: dict, title: str | None = None, year: str | None = None):
     # Find movie and subtitles file
     subtitles_file = False
     subtitles_file_ext = False
@@ -49,6 +49,8 @@ def get_movie_info(name: str, dir: str, config: dict, title: str | None = None):
         movie_info = {**PTN.parse(movie_file), **PTN.parse(name)}
         if title:
             movie_info["title"] = title
+        if year:
+            movie_info["year"] = year
         movie_title = movie_info["title"]
         movie_year = movie_info["year"]
     except KeyError:

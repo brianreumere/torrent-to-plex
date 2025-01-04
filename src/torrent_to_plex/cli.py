@@ -27,7 +27,7 @@ def main(argv=sys.argv):
     config = load_config(args.config)
     logger.debug(f"Got config: {config}")
     if args.torrent_dir == config["movies"]["src_dir"]:
-        movie_info = get_movie_info(args.torrent_name, args.torrent_dir, config, title=args.title)
+        movie_info = get_movie_info(args.torrent_name, args.torrent_dir, config, title=args.title, year=args.year)
         # Create movie dir in destination
         dst_movie_dir = f"{config['movies']['dst_dir']}/{movie_info['title']} ({movie_info['year']})"
         if not args.dry_run:
@@ -100,7 +100,7 @@ def main(argv=sys.argv):
                 else:
                     logger.info("Dry run is enabled, skipping copy")
     elif args.torrent_dir == config["tv"]["src_dir"]:
-        tv_eps = get_tv_eps(args.torrent_name, args.torrent_dir, config, title=args.title)
+        tv_eps = get_tv_eps(args.torrent_name, args.torrent_dir, config, title=args.title, year=args.year)
         if len(tv_eps) > 0:
             for ep in tv_eps:
                 # Create show and season dirs in destination

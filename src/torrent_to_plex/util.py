@@ -77,6 +77,11 @@ def parse_args(parser: argparse.ArgumentParser, args: list):
         default=False,
         help="Enable verbose mode"
     )
+    parser.add_argument(
+        "-y", "--year",
+        action="store",
+        help="Override the year of the movie or TV show"
+    )
     parser.add_argument("torrent_id")
     parser.add_argument("torrent_name")
     parser.add_argument("torrent_dir")
