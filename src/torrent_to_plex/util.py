@@ -30,75 +30,84 @@ def setup_logger():
 
 logger = setup_logger()
 
-parser = argparse.ArgumentParser(
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter
-)
 
-
-def parse_args(parser: argparse.ArgumentParser, args: list):
-    """
-    Parse command-line arguments.
-
-    :param argparse.ArgumentParser parser:
-    :param list args:
-    """
-    parser.add_argument(
-        "-c", "--config",
-        action="store",
-        default=str(Path.home() / ".config" / "ttp.toml"),
-        help="Set the path to the config file"
-    )
-    parser.add_argument(
-        "-d", "--dry-run",
-        action="store_true",
-        default=False,
-        help="Perform a dry run and show what actions would be taken"
-    )
-    parser.add_argument(
-        "-e", "--episode",
-        action="store",
-        help=(
-            "Override the episode of the TV show (if multiple, this is used as the starting "
-            "episode number)"
+class ArgHandler:
+    def __init__(self):
+        self.parser = argparse.ArgumentParser(
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
-    )
-    parser.add_argument(
-        "-l", "--links",
-        action="store_true",
-        default=True,
-        help="Create hard links in the destination instead of copying files"
-    )
-    parser.add_argument(
-        "-o", "--overwrite",
-        action="store_true",
-        default=False,
-        help="Overwrite files in the destination if they already exist"
-    )
-    parser.add_argument(
-        "-s", "--season",
-        action="store",
-        help="Override the season of the TV show"
-    )
-    parser.add_argument(
-        "-t", "--title",
-        action="store",
-        help="Override the title of the movie or TV show"
-    )
-    parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        default=False,
-        help="Enable verbose mode"
-    )
-    parser.add_argument(
-        "-y", "--year",
-        action="store",
-        help="Override the year of the movie or TV show"
-    )
-    parser.add_argument("torrent_id")
-    parser.add_argument("torrent_name")
-    parser.add_argument("torrent_dir")
-    return parser.parse_args(args)
+
+    def parse(self, args: list):
+        self.parser.add_argument(
+            "-c", "--config",
+            action="store",
+            default=str(Path.home() / ".config" / "ttp.toml"),
+            help="Set the path to the config file"
+        )
+        self.parser.add_argument(
+            "-d", "--dry-run",
+            action="store_true",
+            default=False,
+            help="Perform a dry run and show what actions would be taken"
+        )
+        self.parser.add_argument(
+            "-e", "--episode",
+            action="store",
+            help=(
+                "Override the episode of the TV show (if multiple, this is used as the starting "
+                "episode number)"
+            )
+        )
+        self.parser.add_argument(
+            "-l", "--links",
+            action="store_true",
+            default=True,
+            help="Create hard links in the destination instead of copying files"
+        )
+        self.parser.add_argument(
+            "-o", "--overwrite",
+            action="store_true",
+            default=False,
+            help="Overwrite files in the destination if they already exist"
+        )
+        self.parser.add_argument(
+            "-s", "--season",
+            action="store",
+            help="Override the season of the TV show"
+        )
+        self.parser.add_argument(
+            "-t", "--title",
+            action="store",
+            help="Override the title of the movie or TV show"
+        )
+        self.parser.add_argument(
+            "-v", "--verbose",
+            action="store_true",
+            default=False,
+            help="Enable verbose mode"
+        )
+        self.parser.add_argument(
+            "-y", "--year",
+            action="store",
+            help="Override the year of the movie or TV show"
+        )
+        self.parser.add_argument("torrent_id")
+        self.parser.add_argument("torrent_name")
+        self.parser.add_argument("torrent_dir")
+        self.parsed_args = self.parser.parse_args(args)
+
+    def format(self):
+        try:
+            if self.parsed_args.episode:
+                self.parsed_args.episode = int(self.parsed_args.episode)
+            if self.parsed_args.season:
+                self.parsed_args.season = int(self.parsed_args.season)
+        except ValueError as e:
+            logger.error(f"Can't convert value to int: {e}")
+            sys.exit(1)
+
+
+arg_handler = ArgHandler()
 
 
 def load_config(path: str):

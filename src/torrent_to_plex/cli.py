@@ -6,8 +6,7 @@ from torrent_to_plex.movie import get_movie_info
 from torrent_to_plex.tv import get_tv_eps
 from torrent_to_plex.util import (
     logger,
-    parser,
-    parse_args,
+    arg_handler,
     load_config
 )
 
@@ -18,7 +17,9 @@ def main(argv=sys.argv):
 
     :param list argv: Command-line arguments.
     """
-    args = parse_args(parser, argv[1:])
+    arg_handler.parse(argv[1:])
+    arg_handler.format()
+    args = arg_handler.parsed_args
     if args.verbose:
         logger.info("Verbose mode enabled, setting log level to DEBUG")
         logger.setLevel("DEBUG")
@@ -100,7 +101,7 @@ def main(argv=sys.argv):
                 else:
                     logger.info("Dry run is enabled, skipping copy")
     elif args.torrent_dir == config["tv"]["src_dir"]:
-        tv_eps = get_tv_eps(args.torrent_name, args.torrent_dir, config, title=args.title, year=args.year, season=int(args.season), episode=int(args.episode))
+        tv_eps = get_tv_eps(args.torrent_name, args.torrent_dir, config, title=args.title, year=args.year, season=args.season, episode=args.episode)
         if len(tv_eps) > 0:
             for ep in tv_eps:
                 # Create show and season dirs in destination
