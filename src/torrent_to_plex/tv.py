@@ -41,6 +41,12 @@ def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year
                     nested.close()
                 elif entry.name.endswith(config["extensions"]["video"]) and entry.is_file():
                     ep_info = {**PTN.parse(name), **PTN.parse(entry.name)}
+                    if title:
+                        ep_info["title"] = title
+                    if year:
+                        ep_info["year"] = year
+                    if season:
+                        ep_info["season"] = season
                     ep = {
                         "file_path": f"{dir}/{name}/{entry.name}",
                         "extension": Path(entry.name).suffix,
