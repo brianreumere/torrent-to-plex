@@ -120,7 +120,7 @@ class Movie:
     def to_plex(self, library_path: Path, links: bool, overwrite: bool, dry_run: bool):
         plex_name = f"{self.title} ({self.year})"
         plex_folder_path = Path(library_path) / plex_name
-        plex_file_path = Path(plex_folder_path) / f"{plex_name}{self.video['extension']}"
+        plex_file_path = Path(plex_folder_path) / f"{plex_name}{self.video_path.suffix}"
 
         # Create movie directory
         self.create_plex_movie_dir(plex_folder_path, dry_run)
