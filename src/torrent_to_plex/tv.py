@@ -2,7 +2,30 @@ import os
 import PTN
 
 from pathlib import Path
-from torrent_to_plex.util import logger, extract_file
+from torrent_to_plex.util import logger, config_handler, find_files
+
+
+class TvException(Exception):
+    pass
+
+
+class Tv:
+    def __init__(self, torrent_name: str, torrent_dir: str, overrides: dict):
+        config = config_handler.config
+        self.torrent_name = torrent_name
+        self.torrent_dir = torrent_dir
+        self.torrent_path = Path(torrent_dir) / torrent_name
+        self.video_paths = find_files(
+            self.torrent_path,
+            config["extensions"]["video"],
+            depth=2
+        )
+        self.subtitle_paths = find_files(
+            self.torrent_path,
+            config["extensions"]["subtitle"],
+            depth=2
+        )
+        self.get_metadata(overrides)
 
 
 def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year: str | None = None, season: str | None = None, episode: int | None = None):

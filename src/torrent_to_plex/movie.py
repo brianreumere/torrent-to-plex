@@ -1,14 +1,10 @@
 import json
-import os
 import PTN
 import shutil
 
 from langcodes import Language
 from pathlib import Path
-from torrent_to_plex.util import logger, config_handler
-
-
-config = config_handler.config
+from torrent_to_plex.util import logger, config_handler, find_files
 
 
 class MovieException(Exception):
@@ -21,40 +17,17 @@ class Movie:
         self.torrent_name = torrent_name
         self.torrent_dir = torrent_dir
         self.torrent_path = Path(torrent_dir) / torrent_name
-        files = self.find_files(
+        self.video_path = find_files(
             self.torrent_path,
-            config["extensions"]
+            config["extensions"]["video"],
+            max_files=1,
+            min_files=1
+        )[0]
+        self.subtitle_paths = find_files(
+            self.torrent_path,
+            config["extensions"]["subtitle"]
         )
-        self.video_path = files["video_path"]
-        self.subtitle_paths = files["subtitle_paths"]
         self.get_metadata(overrides)
-
-    @staticmethod
-    def find_files(path: Path, extensions: list):
-        video_path = None
-        subtitle_paths = []
-        if path.is_file() and path.suffix in extensions["video"]:
-            video_path = path
-        else:
-            with os.scandir(path) as iterator:
-                for entry in iterator:
-                    entry_path = Path(entry)
-                    if entry_path.is_file():
-                        if entry_path.suffix in extensions["video"]:
-                            video_path = entry_path
-                        elif entry_path.suffix in extensions["subtitle"]:
-                            subtitle_paths.append(entry_path)
-        if video_path:
-            logger.debug(f"Found video file at {video_path}")
-            logger.debug(
-                f"Found {len(subtitle_paths)} subtitle files: {json.dumps(subtitle_paths)}"
-            )
-            return {
-                "video_path": video_path,
-                "subtitle_paths": subtitle_paths
-            }
-        else:
-            raise MovieException(f"Could not find video file at {path}")
 
     def get_metadata(self, overrides: dict):
         try:
@@ -103,10 +76,10 @@ class Movie:
             else:
                 raise MovieException(f"Path {dst_path} already exists")
         if links:
-            message = f"Creating hard link from {src_path} to {dst_path}"
+            message = f"Creating hard link from {dst_path} to {src_path}"
             if not dry_run:
                 logger.debug(message)
-                src_path.hardlink_to(dst_path)
+                dst_path.hardlink_to(src_path)
             else:
                 logger.debug(f"DRY RUN: {message}")
         else:
@@ -118,6 +91,7 @@ class Movie:
                 logger.debug(f"DRY RUN: {message}")
 
     def to_plex(self, library_path: Path, links: bool, overwrite: bool, dry_run: bool):
+        config = config_handler.config
         plex_name = f"{self.title} ({self.year})"
         plex_folder_path = Path(library_path) / plex_name
         plex_file_path = Path(plex_folder_path) / f"{plex_name}{self.video_path.suffix}"

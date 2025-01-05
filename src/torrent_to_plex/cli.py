@@ -4,7 +4,7 @@ import sys
 
 from pathlib import Path
 from torrent_to_plex.movie import Movie, MovieException
-from torrent_to_plex.tv import get_tv_eps
+from torrent_to_plex.tv import Tv, TvException
 from torrent_to_plex.util import (
     logger,
     arg_handler,
@@ -46,10 +46,29 @@ def main(argv=sys.argv):
             )
             library_path = Path(config["movies"]["dst_dir"])
             movie.to_plex(library_path, args.links, args.overwrite, args.dry_run)
+            return 0
         except MovieException as e:
             logger.error(f"Exception processing movie: {e}")
             return 1
     elif args.torrent_dir == config["tv"]["src_dir"]:
+        try:
+            tv = Tv(
+                args.torrent_name,
+                args.torrent_dir,
+                overrides={
+                    "title": args.title,
+                    "year": args.year,
+                    "season": args.season,
+                    "episode": args.episode
+                }
+            )
+            library_path = Path(config["tv"]["dst_dir"])
+            tv.to_plex(library_path, args.links, args.overwrite, args.dry_run)
+            return 0
+        except TvException as e:
+            logger.error(f"Exception processing TV episode or season: {e}")
+            return 1
+
         tv_eps = get_tv_eps(args.torrent_name, args.torrent_dir, config, title=args.title, year=args.year, season=args.season, episode=args.episode)
         if len(tv_eps) > 0:
             for ep in tv_eps:

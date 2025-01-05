@@ -1,5 +1,7 @@
 import argparse
+import json
 import logging
+import os
 import subprocess
 import sys
 import tomllib
@@ -7,6 +9,10 @@ import tomllib
 from logging import handlers
 from pathlib import Path
 from tomllib import TOMLDecodeError
+
+
+class TtpException(Exception):
+    pass
 
 
 class Logger():
@@ -158,3 +164,35 @@ config_handler = ConfigHandler()
 def extract_file(filename, dirname):
     command = ["7z", "e", f"-o{dirname}", f"{dirname}/{filename}"]
     subprocess.run(command)
+
+
+def scan_path(path: Path, depth: int, extensions: list[str]):
+    depth -= 1
+    with os.scandir(path) as it:
+        for entry in it:
+            entry_path = Path(entry)
+            if entry_path.is_file() and entry_path.suffix in extensions:
+                yield entry_path
+
+
+def find_files(
+    path: Path,
+    extensions: list,
+    depth: int = 1,
+    max_files: int | None = None,
+    min_files: int | None = None
+):
+    found_paths = []
+    if path.is_file() and path.suffix in extensions:
+        found_paths.append(path)
+    else:
+        for result in scan_path(path, depth, extensions):
+            found_paths.append(result)
+    if max_files:
+        if len(found_paths) > max_files:
+            raise TtpException(f"Found {len(found_paths)} which is more than maximum {max_files}")
+    if min_files:
+        if len(found_paths) < min_files:
+            raise TtpException(f"Found {len(found_paths)} which is less than minimum {min_files}")
+    logger.debug(f"Found paths: {json.dumps(found_paths)}")
+    return found_paths
