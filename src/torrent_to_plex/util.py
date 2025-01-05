@@ -120,6 +120,8 @@ arg_handler = ArgHandler()
 class ConfigHandler:
     def __init__(self):
         self.config = {
+            "movies": {},
+            "tv": {},
             "extensions": {
                 "video": [".mp4", ".mkv", ".avi"],
                 "subtitle": [".srt"],
@@ -133,7 +135,8 @@ class ConfigHandler:
             with open(path, "rb") as f:
                 try:
                     config = tomllib.load(f)
-                    self.config = {**self.config, **config}
+                    for key in self.config:
+                        self.config[key] = {**self.config[key], **config[key]}
                 except TOMLDecodeError as e:
                     logger.error(f"Could not decode config file at {path}: {e}")
                     sys.exit(1)
