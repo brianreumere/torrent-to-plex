@@ -194,5 +194,5 @@ def find_files(
     if min_files:
         if len(found_paths) < min_files:
             raise TtpException(f"Found {len(found_paths)} which is less than minimum {min_files}")
-    logger.debug(f"Found paths: {json.dumps(found_paths)}")
+    logger.debug(f"Found paths: {found_paths}")
     return found_paths
