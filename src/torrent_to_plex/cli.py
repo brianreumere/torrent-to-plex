@@ -1,3 +1,4 @@
+import json
 import shutil
 import sys
 
@@ -25,13 +26,13 @@ def main(argv=sys.argv):
         logger.info("Verbose mode enabled, setting log level to DEBUG")
         logger.setLevel("DEBUG")
 
-    logger.debug(f"Got arguments: {vars(args)}")
+    logger.debug(f"Got arguments: {json.dumps(vars(args))}")
     logger.debug(f"Loading config from {args.config}")
 
     # Load config
     config_handler.load(args.config)
     config = config_handler.config
-    logger.debug(f"Got config: {config}")
+    logger.debug(f"Got config: {json.dumps(config)}")
 
     if args.torrent_dir == config["movies"]["src_dir"]:
         try:

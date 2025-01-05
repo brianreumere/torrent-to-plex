@@ -90,18 +90,18 @@ class Movie:
 
     @staticmethod
     def create_plex_file(src_path, dst_path, links, overwrite, dry_run):
-        if src_path.exists():
-            if not src_path.is_file():
+        if dst_path.exists():
+            if not dst_path.is_file():
                 raise MovieException(f"Path {src_path} exists and is not a file")
             elif overwrite:
-                message = f"Deleting {src_path} because overwrite is enabled"
+                message = f"Deleting {dst_path} because overwrite is enabled"
                 if not dry_run:
                     logger.debug(message)
-                    src_path.unlink()
+                    dst_path.unlink()
                 else:
                     logger.debug(f"DRY RUN: {message}")
             else:
-                raise MovieException(f"Path {src_path} already exists")
+                raise MovieException(f"Path {dst_path} already exists")
         if links:
             message = f"Creating hard link from {src_path} to {dst_path}"
             if not dry_run:
