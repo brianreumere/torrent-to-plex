@@ -2,7 +2,7 @@ import shutil
 import sys
 
 from pathlib import Path
-from torrent_to_plex.movie import get_movie_info, Movie, MovieException
+from torrent_to_plex.movie import Movie, MovieException
 from torrent_to_plex.tv import get_tv_eps
 from torrent_to_plex.util import (
     logger,
