@@ -2,12 +2,12 @@ import shutil
 import sys
 
 from pathlib import Path
-from torrent_to_plex.movie import get_movie_info
+from torrent_to_plex.movie import get_movie_info, Movie, MovieException
 from torrent_to_plex.tv import get_tv_eps
 from torrent_to_plex.util import (
     logger,
     arg_handler,
-    load_config
+    config_handler
 )
 
 
@@ -17,89 +17,37 @@ def main(argv=sys.argv):
 
     :param list argv: Command-line arguments.
     """
+    # Parse args
     arg_handler.parse(argv[1:])
-    arg_handler.format()
     args = arg_handler.parsed_args
+
     if args.verbose:
         logger.info("Verbose mode enabled, setting log level to DEBUG")
         logger.setLevel("DEBUG")
+
     logger.debug(f"Got arguments: {vars(args)}")
     logger.debug(f"Loading config from {args.config}")
-    config = load_config(args.config)
+
+    # Load config
+    config_handler.load(args.config)
+    config = config_handler.config
     logger.debug(f"Got config: {config}")
+
     if args.torrent_dir == config["movies"]["src_dir"]:
-        movie_info = get_movie_info(args.torrent_name, args.torrent_dir, config, title=args.title, year=args.year)
-        # Create movie dir in destination
-        dst_movie_dir = f"{config['movies']['dst_dir']}/{movie_info['title']} ({movie_info['year']})"
-        if not args.dry_run:
-            Path(dst_movie_dir).mkdir(exist_ok=True)
-        else:
-            logger.info(f"Would create directory {dst_movie_dir} but dry run is enabled")
-        # Move movie and subtitles files (assume English) to destination
-        if args.links:
-            path = Path(
-                f"{dst_movie_dir}/{movie_info['title']} ({movie_info['year']}){movie_info['ext']}"
+        try:
+            movie = Movie(
+                args.torrent_name,
+                args.torrent_dir,
+                overrides={
+                    "title": args.title,
+                    "year": args.year
+                }
             )
-            if path.is_file() and args.overwrite and not args.dry_run:
-                logger.info(f"Overwrite is enabled, deleting existing file at {path}")
-                path.unlink()
-            elif path.is_file() and args.overwrite and args.dry_run:
-                logger.info(f"Overwrite is enabled, would delete existing file at {path} but dry run is also enabled")
-            try:
-                if path.is_dir():
-                    print(f"{path.name} is a directory. This is unsupported.")
-                    pass
-                else:
-                    if not args.dry_run:
-                        path.hardlink_to(movie_info["full_path"])
-                    else:
-                        logger.info(f"Would create new link at {path} but dry run is enabled")
-            except FileExistsError:
-                print(f"{path.name} already exists.")
-                pass
-        else:
-            if not args.dry_run:
-                shutil.copyfile(
-                    movie_info["full_path"],
-                    f"{dst_movie_dir}/{movie_info['title']} ({movie_info['year']}){movie_info['ext']}"
-                )
-            else:
-                logger.info("Dry run is enabled, skipping copy")
-        if movie_info["subtitles_file"]:
-            if args.links:
-                path = Path(
-                    (
-                        f"{dst_movie_dir}/{movie_info['title']} "
-                        f"({movie_info['year']}).en{movie_info['subtitles_file_ext']}"
-                    )
-                )
-                if path.is_file() and args.overwrite and not args.dry_run:
-                    logger.info(f"Overwrite is enabled, deleting existing file at {path}")
-                    path.unlink()
-                elif path.is_file() and args.overwrite and args.dry_run:
-                    logger.info(f"Overwrite is enabled, would delete existing file at {path} but dry run is also enabled")
-                try:
-                    if path.is_dir():
-                        raise Exception(f"{path.name} is a directory. This is unsupported.")
-                        pass
-                    else:
-                        if not args.dry_run:
-                            path.hardlink_to(f"{args.torrent_dir}/{args.torrent_name}/{movie_info['subtitles_file']}")
-                        else:
-                            logger.info(f"Would create new link at {path} but dry run is enabled")
-                except FileExistsError:
-                    raise Exception(f"{path.name} already exists.")
-            else:
-                if not args.dry_run:
-                    shutil.copyfile(
-                        f"{args.torrent_dir}/{args.torrent_name}/{movie_info['subtitles_file']}",
-                        (
-                            f"{dst_movie_dir}/{movie_info['title']} "
-                            f"({movie_info['year']}).en{movie_info['subtitles_file_ext']}"
-                        )
-                    )
-                else:
-                    logger.info("Dry run is enabled, skipping copy")
+            library_path = Path(config["movies"]["dst_dir"])
+            movie.to_plex(library_path, args.links, args.overwrite, args.dry_run)
+        except MovieException as e:
+            logger.error(f"Exception processing movie: {e}")
+            return 1
     elif args.torrent_dir == config["tv"]["src_dir"]:
         tv_eps = get_tv_eps(args.torrent_name, args.torrent_dir, config, title=args.title, year=args.year, season=args.season, episode=args.episode)
         if len(tv_eps) > 0:
@@ -153,6 +101,8 @@ def main(argv=sys.argv):
                         logger.info("Dry run is enabled, skipping copy")
         else:
             raise Exception("No episodes found!")
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

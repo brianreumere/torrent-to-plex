@@ -9,26 +9,26 @@ from pathlib import Path
 from tomllib import TOMLDecodeError
 
 
-def setup_logger():
-    """
-    Set up logging.
-    """
-    logger = logging.getLogger(__name__)
-    stream_handler = logging.StreamHandler()
-    logger.addHandler(stream_handler)
-    if Path("/dev/log").exists():
-        syslog_handler = handlers.SysLogHandler(address="/dev/log")
-        # Include log level in messages to syslog
-        syslog_handler.setFormatter(
-            logging.Formatter("ttp[%(process)d]: %(levelname)s: %(message)s")
-        )
-        logger.addHandler(syslog_handler)
-    # May be overriden later if the -v argument is used
-    logger.setLevel("INFO")
-    return logger
+class Logger():
+    def __init__(self):
+        """
+        Set up logging.
+        """
+        self.logger = logging.getLogger(__name__)
+        stream_handler = logging.StreamHandler()
+        self.logger.addHandler(stream_handler)
+        if Path("/dev/log").exists():
+            syslog_handler = handlers.SysLogHandler(address="/dev/log")
+            # Include log level in messages to syslog
+            syslog_handler.setFormatter(
+                logging.Formatter("ttp[%(process)d]: %(levelname)s: %(message)s")
+            )
+            self.logger.addHandler(syslog_handler)
+        # May be overriden later if the -v argument is used
+        self.logger.setLevel("INFO")
 
 
-logger = setup_logger()
+logger = Logger().logger
 
 
 class ArgHandler:
@@ -95,6 +95,7 @@ class ArgHandler:
         self.parser.add_argument("torrent_name")
         self.parser.add_argument("torrent_dir")
         self.parsed_args = self.parser.parse_args(args)
+        self.format()
 
     def format(self):
         try:
@@ -110,24 +111,48 @@ class ArgHandler:
 arg_handler = ArgHandler()
 
 
-def load_config(path: str):
-    try:
-        with open(path, "rb") as f:
-            try:
-                config = tomllib.load(f)
+class ConfigHandler:
+    def __init__(self):
+        self.config = {
+            "extensions": {
+                "video": [".mp4", ".mkv", ".avi"],
+                "subtitle": [".srt"],
+                "subtitle_default_language": ".en",
+                "archive": [".rar"]
+            }
+        }
+
+    def load(self, path: str):
+        try:
+            with open(path, "rb") as f:
                 try:
-                    config["extensions"]["video"] = tuple(config["extensions"]["video"])
-                    config["extensions"]["archive"] = tuple(config["extensions"]["archive"])
-                except KeyError as e:
-                    logger.error(f"Missing required configuration option: {e}")
+                    config = tomllib.load(f)
+                    self.config = {**self.config, **config}
+                except TOMLDecodeError as e:
+                    logger.error(f"Could not decode config file at {path}: {e}")
                     sys.exit(1)
-                return config
-            except TOMLDecodeError as e:
-                logger.error(f"Could not decode config file at {path}: {e}")
-                sys.exit(1)
-    except FileNotFoundError as e:
-        logger.error(f"Could not find config file at path {path}: {e}")
-        sys.exit(1)
+                # self.format()
+        except FileNotFoundError as e:
+            logger.error(f"Could not find config file at path {path}: {e}")
+            sys.exit(1)
+
+    # def format(self):
+    #     """
+    #     Ensures certain config items are formatted correctly.
+    #     """
+    #     try:
+    #         self.config["extensions"]["video"] = (
+    #             tuple(self.config["extensions"]["video"])
+    #         )
+    #         self.config["extensions"]["archive"] = (
+    #             tuple(self.config["extensions"]["archive"])
+    #         )
+    #     except KeyError as e:
+    #         logger.error(f"Missing required configuration option: {e}")
+    #         sys.exit(1)
+
+
+config_handler = ConfigHandler()
 
 
 def extract_file(filename, dirname):
