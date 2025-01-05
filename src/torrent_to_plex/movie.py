@@ -20,7 +20,7 @@ class Movie:
         config = config_handler.config
         self.torrent_name = torrent_name
         self.torrent_dir = torrent_dir
-        self.torrent_path = Path(torrent_dir / torrent_name)
+        self.torrent_path = Path(torrent_dir) / torrent_name
         files = self.find_files(
             self.torrent_path,
             config["extensions"]
@@ -119,8 +119,8 @@ class Movie:
 
     def to_plex(self, library_path: Path, links: bool, overwrite: bool, dry_run: bool):
         plex_name = f"{self.title} ({self.year})"
-        plex_folder_path = Path(library_path / plex_name)
-        plex_file_path = Path(plex_folder_path / f"{plex_name}{self.video['extension']}")
+        plex_folder_path = Path(library_path) / plex_name
+        plex_file_path = Path(plex_folder_path) / f"{plex_name}{self.video['extension']}"
 
         # Create movie directory
         self.create_plex_movie_dir(plex_folder_path, dry_run)
@@ -144,8 +144,8 @@ class Movie:
             if Language.get(language_suffix).is_valid():
                 valid_language_code = True
                 logger.debug(f"Found valid language suffix {language_suffix} in {subtitle_path}")
-                plex_subtitle_path = Path(
-                    plex_folder_path
+                plex_subtitle_path = (
+                    Path(plex_folder_path)
                     / f"{plex_name}{language_suffix}{subtitle_suffix}"
                 )
             else:
@@ -155,8 +155,8 @@ class Movie:
                     f"No valid language found in {subtitle_path}, assuming default "
                     f"{default_language_suffix}"
                 )
-                plex_subtitle_path = Path(
-                    plex_folder_path
+                plex_subtitle_path = (
+                    Path(plex_folder_path)
                     / f"{plex_name}{default_language_suffix}{subtitle_suffix}"
                 )
             if (
