@@ -23,7 +23,10 @@ class Tv(Torrent):
         for video in self.videos:
             path = video["path"]
             metadata = video["metadata"]
-            plex_name = f"{metadata['title']} ({metadata['year']})"
+            if "year" in metadata:
+                plex_name = f"{metadata['title']} ({metadata['year']})"
+            else:
+                plex_name = metadata['title']
             plex_folder_path = Path(library_path) / plex_name
             self.create_plex_dir(plex_folder_path, dry_run)
             plex_season_path = Path(plex_folder_path) / f"Season {metadata['season']:02d}"
