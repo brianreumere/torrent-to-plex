@@ -1,65 +1,73 @@
-import os
-import PTN
-
+from langcodes import Language
 from pathlib import Path
-from torrent_to_plex.util import logger, extract_file
+from torrent_to_plex.torrent import Overrides, Torrent
+from torrent_to_plex.util import config_handler, logger
+
+config = config_handler.config
 
 
-def get_movie_info(name: str, dir: str, config: dict, title: str | None = None, year: str | None = None):
-    # Find movie and subtitles file
-    subtitles_file = False
-    subtitles_file_ext = False
-    # Check if torrent is just a file
-    if (
-        Path(f"{dir}/{name}").is_file()
-        and f"{dir}/{name}".endswith(config["extensions"]["video"])
-    ):
-        logger.debug(f"Found movie file at {dir}/{name}")
-        movie_file = name
-        movie_file_full_path = f"{dir}/{name}"
-        movie_file_ext = Path(movie_file).suffix
-    # Otherwise treat as a directory
-    else:
-        # Check for archive files and extract
-        with os.scandir(f"{dir}/{name}") as it:
-            for entry in it:
-                if entry.name.endswith(config["extensions"]["archive"]) and entry.is_file():
-                    archive_file = entry.name
-                    extract_file(archive_file, f"{dir}/{name}")
-        with os.scandir(f"{dir}/{name}") as it:
-            for entry in it:
-                # Find video files
-                if entry.name.endswith(config["extensions"]["video"]) and entry.is_file():
-                    movie_file = entry.name
-                    movie_file_full_path = f"{dir}/{name}/{movie_file}"
-                    movie_file_ext = Path(movie_file).suffix
-                # Find subtitles
-                if entry.name.endswith(".srt") and entry.is_file():
-                    subtitles_file = entry.name
-                    subtitles_file_ext = Path(subtitles_file).suffix
-                elif os.path.isdir(f"{dir}/{name}/Subs"):
-                    with os.scandir(f"{dir}/{name}/Subs") as subs:
-                        for sub in subs:
-                            if sub.name.endswith(".srt") and sub.is_file():
-                                subtitles_file = f"Subs/{sub.name}"
-                                subtitles_file_ext = Path(subtitles_file).suffix
-                                break
-    try:
-        # Merge info from the directory name and file name
-        movie_info = {**PTN.parse(movie_file), **PTN.parse(name)}
-        if title:
-            movie_info["title"] = title
-        if year:
-            movie_info["year"] = year
-        movie_title = movie_info["title"]
-        movie_year = movie_info["year"]
-    except KeyError:
-        raise Exception(f"Couldn't get movie title and year! Movie info: {movie_info}")
-    return {
-        "title": movie_title,
-        "year": movie_year,
-        "full_path": movie_file_full_path,
-        "ext": movie_file_ext,
-        "subtitles_file": subtitles_file,
-        "subtitles_file_ext": subtitles_file_ext
-    }
+class Movie(Torrent):
+    def __init__(self, torrent_name: str, torrent_dir: str, overrides: Overrides):
+        super().__init__(torrent_name, torrent_dir, overrides)
+        self.videos = self.find_files(
+            self.torrent_path,
+            config["extensions"]["video"],
+            max_files=1,
+            min_files=1
+        )
+
+    def to_plex(self, library_path: Path, links: bool, overwrite: bool, dry_run: bool):
+        for video in self.videos:
+            path = video["path"]
+            metadata = video["metadata"]
+            plex_name = f"{metadata['title']} ({metadata['year']})"
+            plex_folder_path = Path(library_path) / plex_name
+            self.create_plex_dir(plex_folder_path, dry_run)
+            plex_file_path = Path(plex_folder_path) / f"{plex_name}{path.suffix}"
+            self.create_plex_file(
+                path,
+                plex_file_path,
+                links,
+                overwrite,
+                dry_run
+            )
+
+        # Create subtitle files
+        default_language_copied = False
+        for subtitle in self.subtitles:
+            subtitle_path = subtitle["path"]
+            valid_language_code = False
+            default_language = False
+            subtitle_suffix = subtitle_path.suffix
+            language_suffix = subtitle_path.suffixes[-2]
+            if Language.get(language_suffix).is_valid():
+                valid_language_code = True
+                logger.debug(f"Found valid language suffix {language_suffix} in {subtitle_path}")
+                plex_subtitle_path = (
+                    Path(plex_folder_path)
+                    / f"{plex_name}{language_suffix}{subtitle_suffix}"
+                )
+            else:
+                default_language = True
+                default_language_suffix = config['extensions']['subtitle_default_language']
+                logger.debug(
+                    f"No valid language found in {subtitle_path}, assuming default "
+                    f"{default_language_suffix}"
+                )
+                plex_subtitle_path = (
+                    Path(plex_folder_path)
+                    / f"{plex_name}{default_language_suffix}{subtitle_suffix}"
+                )
+            if (
+                (default_language and not default_language_copied)
+                or valid_language_code
+            ):
+                self.create_plex_file(
+                    subtitle_path,
+                    plex_subtitle_path,
+                    links,
+                    overwrite,
+                    dry_run
+                )
+                if default_language:
+                    default_language_copied = True

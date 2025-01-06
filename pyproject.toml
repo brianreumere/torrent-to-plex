@@ -4,13 +4,14 @@ requires = [ "setuptools>=75.6" ]
 
 [project]
 name = "torrent-to-plex"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
     { name = "Brian Reumere", email = "brian@mutualaid.info" }
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "parse-torrent-name @ git+https://github.com/brianreumere/parse-torrent-name.git@master"
+    "parse-torrent-name @ git+https://github.com/brianreumere/parse-torrent-name.git@master",
+    "langcodes~=3.5"
 ]
 
 [project.urls]

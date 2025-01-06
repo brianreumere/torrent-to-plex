@@ -1,94 +1,43 @@
-import os
-import PTN
-
 from pathlib import Path
-from torrent_to_plex.util import logger, extract_file
+from torrent_to_plex.torrent import Overrides, Torrent
+from torrent_to_plex.util import config_handler
+
+config = config_handler.config
 
 
-def get_tv_eps(name: str, dir: str, config: dict, title: str | None = None, year: str | None = None, season: str | None = None, episode: int | None = None):
-    eps = []
-    if os.path.isdir(f"{dir}/{name}"):
-        # Check for archive files and extract
-        with os.scandir(f"{dir}/{name}") as it:
-            for entry in it:
-                if entry.name.endswith(config["extensions"]["archive"]) and entry.is_file():
-                    archive_file = entry.name
-                    extract_file(archive_file, f"{dir}/{name}")
-        with os.scandir(f"{dir}/{name}") as it:
-            for entry in it:
-                if entry.is_dir():
-                    nested = os.scandir(f"{dir}/{name}/{entry.name}")
-                    for nested_entry in nested:
-                        ep_info = {**PTN.parse(name), **PTN.parse(nested_entry.name)}
-                        # Override title if provided
-                        if title:
-                            ep_info["title"] = title
-                        if year:
-                            ep_info["year"] = year
-                        if season:
-                            ep_info["season"] = season
-                        if episode:
-                            ep_info["episode"] = episode
-                        ep = {
-                            "file_path": (
-                                f"{dir}/{name}/{entry.name}/{nested_entry.name}"
-                            ),
-                            "extension": Path(nested_entry.name).suffix,
-                            "season": ep_info["season"],
-                            "number": ep_info["episode"],
-                            "show": ep_info["title"]
-                        }
-                        logger.info(ep)
-                        eps.append(ep)
-                        if episode:
-                            episode += 1
-                    nested.close()
-                elif entry.name.endswith(config["extensions"]["video"]) and entry.is_file():
-                    ep_info = {**PTN.parse(name), **PTN.parse(entry.name)}
-                    if title:
-                        ep_info["title"] = title
-                    if year:
-                        ep_info["year"] = year
-                    if season:
-                        ep_info["season"] = season
-                    if episode:
-                        ep_info["episode"] = episode
-                    ep = {
-                        "file_path": f"{dir}/{name}/{entry.name}",
-                        "extension": Path(entry.name).suffix,
-                        "season": ep_info["season"],
-                        "number": ep_info["episode"],
-                        "show": ep_info["title"]
-                    }
-                    logger.info(ep)
-                    eps.append(ep)
-                    if episode:
-                        episode += 1
-                    # Don't look for subtitles since TV torrents generally don't
-                    # have them?
-    elif (
-        os.path.isfile(f"{dir}/{name}")
-        and f"{dir}/{name}".endswith(config["extensions"]["video"])
-    ):
-        ep_info = PTN.parse(name)
-        if title:
-            ep_info["title"] = title
-        if year:
-            ep_info["year"] = year
-        if season:
-            ep_info["season"] = season
-        if episode:
-            ep_info["episode"] = episode
-        ep = {
-            "file_path": f"{dir}/{name}",
-            "extension": Path(f"{dir}/{name}").suffix,
-            "season": ep_info["season"],
-            "number": ep_info["episode"],
-            "show": ep_info["title"]
-        }
-        logger.debug(f"Appending episode {ep}")
-        eps.append(ep)
-    else:
-        raise Exception("Torrent path isn't a directory or a file!")
-    logger.debug(f"Found {len(eps)} episodes")
-    return eps
+class TvException(Exception):
+    pass
+
+
+class Tv(Torrent):
+    def __init__(self, torrent_name: str, torrent_dir: str, overrides: Overrides) -> None:
+        super().__init__(torrent_name, torrent_dir, overrides)
+        self.videos = self.find_files(
+            self.torrent_path,
+            config["extensions"]["video"],
+            depth=2  # To look in season directories for multi-season torrents
+        )
+
+    def to_plex(self, library_path: Path, links: bool, overwrite: bool, dry_run: bool) -> None:
+        for video in self.videos:
+            path = video["path"]
+            metadata = video["metadata"]
+            if "year" in metadata:
+                plex_name = f"{metadata['title']} ({metadata['year']})"
+            else:
+                plex_name = metadata['title']
+            plex_folder_path = Path(library_path) / plex_name
+            self.create_plex_dir(plex_folder_path, dry_run)
+            plex_season_path = Path(plex_folder_path) / f"Season {metadata['season']:02d}"
+            self.create_plex_dir(plex_season_path, dry_run)
+            plex_file_path = (
+                Path(plex_season_path)
+                / f"S{metadata['season']:02d}E{metadata['episode']:02d}{path.suffix}"
+            )
+            self.create_plex_file(
+                path,
+                plex_file_path,
+                links,
+                overwrite,
+                dry_run
+            )
