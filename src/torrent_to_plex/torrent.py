@@ -55,25 +55,25 @@ class Torrent:
             logger.debug(f"Getting metadata for paths: {files}")
             for file in files:
                 file["metadata"] = self.get_metadata(
-                    file["path"].name,
                     self.torrent_name,
+                    file["path"].name,
                     self.overrides
                 )
             logger.debug(f"Returning files with metadata: {files}")
         return files
 
     @staticmethod
-    def get_metadata(filename, torrent_name, overrides: dict):
+    def get_metadata(torrent_name, filename, overrides: dict):
         try:
             # Remove None values from overrides
             overrides = {k: v for k, v in overrides.items() if v}
             # Prefer metadata from:
             #   1. Overrides
-            #   2. Torrent name
-            #   3. Video filename
+            #   2. Video filename
+            #   3. Torrent name
             metadata = {
-                **PTN.parse(filename),
                 **PTN.parse(torrent_name),
+                **PTN.parse(filename),
                 **overrides
             }
             logger.debug(f"Got metadata: {json.dumps(metadata)}")
