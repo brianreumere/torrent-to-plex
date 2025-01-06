@@ -55,7 +55,7 @@ class Torrent:
             logger.debug(f"Getting metadata for paths: {files}")
             for file in files:
                 file["metadata"] = self.get_metadata(
-                    file["path"],
+                    file["path"].name,
                     self.torrent_name,
                     self.overrides
                 )
