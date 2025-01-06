@@ -17,6 +17,7 @@ class Torrent:
     def __init__(self, torrent_name: str, torrent_dir: str, overrides: dict):
         self.torrent_name = torrent_name
         self.torrent_dir = torrent_dir
+        self.overrides = overrides
         self.torrent_path = Path(torrent_dir) / torrent_name
         self.subtitles = self.find_files(
             self.torrent_path,
