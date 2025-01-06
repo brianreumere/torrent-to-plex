@@ -32,8 +32,8 @@ class Tv(Torrent):
             plex_season_path = Path(plex_folder_path) / f"Season {metadata['season']:02d}"
             self.create_plex_dir(plex_season_path, dry_run)
             plex_file_path = (
-                Path(plex_folder_path)
-                / f"S{metadata['season']:02d}E{metadata['episode']:02d}"
+                Path(plex_season_path)
+                / f"S{metadata['season']:02d}E{metadata['episode']:02d}{path.suffix}"
             )
             self.create_plex_file(
                 path,
