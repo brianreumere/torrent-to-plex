@@ -10,10 +10,10 @@ config = config_handler.config
 
 
 class Overrides(TypedDict):
-    episode: NotRequired[str]
-    season: NotRequired[str]
+    episode: NotRequired[int]
+    season: NotRequired[int]
     title: NotRequired[str]
-    year: NotRequired[str]
+    year: NotRequired[int]
 
 
 class TorrentFile(TypedDict):

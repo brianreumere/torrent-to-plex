@@ -51,6 +51,7 @@ class ArgHandler:
         self.parser.add_argument(
             "-e", "--episode",
             action="store",
+            type=int,
             help=(
                 "Override the episode of the TV show (if multiple, this is used as the starting "
                 "episode number; no effect for movies)"
@@ -71,6 +72,7 @@ class ArgHandler:
         self.parser.add_argument(
             "-s", "--season",
             action="store",
+            type=int,
             help="Override the season of the TV show (no effect for movies)"
         )
         self.parser.add_argument(
@@ -87,23 +89,13 @@ class ArgHandler:
         self.parser.add_argument(
             "-y", "--year",
             action="store",
+            type=int,
             help="Override the year of the movie or TV show"
         )
         self.parser.add_argument("torrent_id")
         self.parser.add_argument("torrent_name")
         self.parser.add_argument("torrent_dir")
         self.parsed_args = self.parser.parse_args(args)
-        self.format()
-
-    def format(self) -> None:
-        try:
-            if self.parsed_args.episode:
-                self.parsed_args.episode = int(self.parsed_args.episode)
-            if self.parsed_args.season:
-                self.parsed_args.season = int(self.parsed_args.season)
-        except ValueError as e:
-            logger.error(f"Can't convert value to int: {e}")
-            sys.exit(1)
 
 
 arg_handler = ArgHandler()
