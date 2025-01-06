@@ -16,7 +16,6 @@ class Movie(Torrent):
             max_files=1,
             min_files=1
         )
-        self.get_metadata(overrides)
 
     def to_plex(self, library_path: Path, links: bool, overwrite: bool, dry_run: bool):
         for video in self.videos:

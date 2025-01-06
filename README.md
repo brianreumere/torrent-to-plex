@@ -31,4 +31,10 @@ Subtitle files are found based on the file extensions in `subtitle`. If a found 
 
 This script assumes you are using the [Label and Execute plugins](https://deluge-torrent.org/plugins/) for Deluge.
 
+## Limitations
 
+Unarchiving is not currently supported.
+
+TV episode files are only named with the season and episode number, e.g., `S01E01`. I'd like to include the show name and year, and episode name in the future.
+
+Additional video files like extras are not supported well.
