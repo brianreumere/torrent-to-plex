@@ -4,7 +4,7 @@ import shutil
 
 from pathlib import Path
 from torrent_to_plex.util import config_handler, logger, scan_for_file_paths
-from typing import NotRequired, TypedDict
+from typing import Any, NotRequired, TypedDict
 
 config = config_handler.config
 
@@ -18,7 +18,7 @@ class Overrides(TypedDict):
 
 class TorrentFile(TypedDict):
     path: Path
-    metadata: NotRequired[dict]
+    metadata: NotRequired[dict[str, Any]]
 
 
 class TorrentException(Exception):
