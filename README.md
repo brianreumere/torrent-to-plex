@@ -48,4 +48,6 @@ torrent_dir="$3"
 ttp -v "$torrent_id" "$torrent_name" "$torrent_dir"
 ```
 
+Configure the Deluge Execute plugin to run `ttp.sh` (include the full path) when torrents complete.
+
 For other options you can pass to `ttp` run `ttp -h` or `ttp --help`.
