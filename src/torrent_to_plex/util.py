@@ -169,34 +169,10 @@ def extract_file(filename, dirname):
     subprocess.run(command)
 
 
-def scan_dir(path: Path, depth: int, extensions: list[str]):
+def scan_for_file_paths(path: Path, depth: int, extensions: list[str]):
     depth -= 1
     with os.scandir(path) as it:
         for entry in it:
             entry_path = Path(entry)
             if entry_path.is_file() and entry_path.suffix in extensions:
                 yield entry_path
-
-
-def find_files(
-    path: Path,
-    extensions: list,
-    depth: int = 1,
-    max_files: int | None = None,
-    min_files: int | None = None
-):
-    found_paths = []
-    if path.is_file() and path.suffix in extensions:
-        found_paths.append(path)
-    elif path.is_dir():
-        for result in scan_dir(path, depth, extensions):
-            found_paths.append(result)
-    # Check found files against max and min
-    if max_files:
-        if len(found_paths) > max_files:
-            raise TtpException(f"Found {len(found_paths)} which is more than maximum {max_files}")
-    if min_files:
-        if len(found_paths) < min_files:
-            raise TtpException(f"Found {len(found_paths)} which is less than minimum {min_files}")
-    logger.debug(f"Found paths: {found_paths}")
-    return found_paths
