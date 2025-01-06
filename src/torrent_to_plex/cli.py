@@ -13,11 +13,6 @@ from torrent_to_plex.util import (
 
 
 def main(argv: list[str] = sys.argv) -> int:
-    """
-    Main function for the CLI app.
-
-    :param list argv: Command-line arguments.
-    """
     # Parse args
     arg_handler.parse(argv[1:])
     args = arg_handler.parsed_args
