@@ -3,10 +3,22 @@ import PTN
 import shutil
 
 from pathlib import Path
-from torrent_to_plex.util import logger, config_handler, scan_for_file_paths
-
+from torrent_to_plex.util import config_handler, logger, scan_for_file_paths
+from typing import NotRequired, TypedDict
 
 config = config_handler.config
+
+
+class Overrides(TypedDict):
+    episode: NotRequired[str]
+    season: NotRequired[str]
+    title: NotRequired[str]
+    year: NotRequired[str]
+
+
+class TorrentFile(TypedDict):
+    path: Path
+    metadata: NotRequired[dict]
 
 
 class TorrentException(Exception):
@@ -14,7 +26,7 @@ class TorrentException(Exception):
 
 
 class Torrent:
-    def __init__(self, torrent_name: str, torrent_dir: str, overrides: dict):
+    def __init__(self, torrent_name: str, torrent_dir: str, overrides: Overrides) -> None:
         self.torrent_name = torrent_name
         self.torrent_dir = torrent_dir
         self.overrides = overrides
@@ -28,12 +40,12 @@ class Torrent:
     def find_files(
         self,
         path: Path,
-        extensions: list,
+        extensions: list[str],
         depth: int = 1,
         max_files: int | None = None,
         min_files: int | None = None,
         metadata: bool = True
-    ):
+    ) -> list[TorrentFile]:
         files = []
         if path.is_file() and path.suffix in extensions:
             files.append({"path": path})
@@ -63,7 +75,7 @@ class Torrent:
         return files
 
     @staticmethod
-    def get_metadata(torrent_name, filename, overrides: dict):
+    def get_metadata(torrent_name: str, filename: str, overrides: Overrides) -> dict:
         try:
             # Remove None values from overrides
             overrides = {k: v for k, v in overrides.items() if v}
@@ -82,7 +94,7 @@ class Torrent:
             raise TorrentException(f"Failed to get metadata: {e}")
 
     @staticmethod
-    def create_plex_dir(path: Path, dry_run: bool):
+    def create_plex_dir(path: Path, dry_run: bool) -> None:
         if path.exists():
             if not path.is_dir():
                 raise TorrentException(f"Path {path} exists and is not a directory")
@@ -95,7 +107,13 @@ class Torrent:
                 logger.debug(f"DRY RUN: {message}")
 
     @staticmethod
-    def create_plex_file(src_path, dst_path, links, overwrite, dry_run):
+    def create_plex_file(
+        src_path: Path,
+        dst_path: Path,
+        links: bool,
+        overwrite: bool,
+        dry_run: bool
+    ) -> None:
         if dst_path.exists():
             if not dst_path.is_file():
                 raise TorrentException(f"Path {src_path} exists and is not a file")

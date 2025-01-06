@@ -1,5 +1,4 @@
 import json
-import shutil
 import sys
 
 from pathlib import Path
@@ -13,7 +12,7 @@ from torrent_to_plex.util import (
 )
 
 
-def main(argv=sys.argv):
+def main(argv: list[str] = sys.argv) -> int:
     """
     Main function for the CLI app.
 

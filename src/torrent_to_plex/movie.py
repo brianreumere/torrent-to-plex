@@ -1,14 +1,13 @@
 from langcodes import Language
 from pathlib import Path
-from torrent_to_plex.torrent import Torrent
-from torrent_to_plex.util import logger, config_handler
-
+from torrent_to_plex.torrent import Overrides, Torrent
+from torrent_to_plex.util import config_handler, logger
 
 config = config_handler.config
 
 
 class Movie(Torrent):
-    def __init__(self, torrent_name: str, torrent_dir: str, overrides: dict):
+    def __init__(self, torrent_name: str, torrent_dir: str, overrides: Overrides):
         super().__init__(torrent_name, torrent_dir, overrides)
         self.videos = self.find_files(
             self.torrent_path,

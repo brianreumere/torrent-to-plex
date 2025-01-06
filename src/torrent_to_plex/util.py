@@ -1,25 +1,17 @@
 import argparse
-import json
 import logging
 import os
-import subprocess
 import sys
 import tomllib
 
+from collections.abc import Iterator
 from logging import handlers
 from pathlib import Path
 from tomllib import TOMLDecodeError
 
 
-class TtpException(Exception):
-    pass
-
-
 class Logger():
-    def __init__(self):
-        """
-        Set up logging.
-        """
+    def __init__(self) -> None:
         self.logger = logging.getLogger(__name__)
         stream_handler = logging.StreamHandler()
         self.logger.addHandler(stream_handler)
@@ -38,12 +30,12 @@ logger = Logger().logger
 
 
 class ArgHandler:
-    def __init__(self):
+    def __init__(self) -> None:
         self.parser = argparse.ArgumentParser(
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
 
-    def parse(self, args: list):
+    def parse(self, args: list) -> None:
         self.parser.add_argument(
             "-c", "--config",
             action="store",
@@ -61,7 +53,7 @@ class ArgHandler:
             action="store",
             help=(
                 "Override the episode of the TV show (if multiple, this is used as the starting "
-                "episode number)"
+                "episode number; no effect for movies)"
             )
         )
         self.parser.add_argument(
@@ -79,7 +71,7 @@ class ArgHandler:
         self.parser.add_argument(
             "-s", "--season",
             action="store",
-            help="Override the season of the TV show"
+            help="Override the season of the TV show (no effect for movies)"
         )
         self.parser.add_argument(
             "-t", "--title",
@@ -103,7 +95,7 @@ class ArgHandler:
         self.parsed_args = self.parser.parse_args(args)
         self.format()
 
-    def format(self):
+    def format(self) -> None:
         try:
             if self.parsed_args.episode:
                 self.parsed_args.episode = int(self.parsed_args.episode)
@@ -118,7 +110,8 @@ arg_handler = ArgHandler()
 
 
 class ConfigHandler:
-    def __init__(self):
+    def __init__(self) -> None:
+        # Defaults
         self.config = {
             "movies": {},
             "tv": {},
@@ -130,7 +123,7 @@ class ConfigHandler:
             }
         }
 
-    def load(self, path: str):
+    def load(self, path: str) -> None:
         try:
             with open(path, "rb") as f:
                 try:
@@ -140,36 +133,15 @@ class ConfigHandler:
                 except TOMLDecodeError as e:
                     logger.error(f"Could not decode config file at {path}: {e}")
                     sys.exit(1)
-                # self.format()
         except FileNotFoundError as e:
             logger.error(f"Could not find config file at path {path}: {e}")
             sys.exit(1)
-
-    # def format(self):
-    #     """
-    #     Ensures certain config items are formatted correctly.
-    #     """
-    #     try:
-    #         self.config["extensions"]["video"] = (
-    #             tuple(self.config["extensions"]["video"])
-    #         )
-    #         self.config["extensions"]["archive"] = (
-    #             tuple(self.config["extensions"]["archive"])
-    #         )
-    #     except KeyError as e:
-    #         logger.error(f"Missing required configuration option: {e}")
-    #         sys.exit(1)
 
 
 config_handler = ConfigHandler()
 
 
-def extract_file(filename, dirname):
-    command = ["7z", "e", f"-o{dirname}", f"{dirname}/{filename}"]
-    subprocess.run(command)
-
-
-def scan_for_file_paths(path: Path, depth: int, extensions: list[str]):
+def scan_for_file_paths(path: Path, depth: int, extensions: list[str]) -> Iterator[Path]:
     depth -= 1
     with os.scandir(path) as it:
         for entry in it:

@@ -1,7 +1,6 @@
 from pathlib import Path
-from torrent_to_plex.torrent import Torrent
+from torrent_to_plex.torrent import Overrides, Torrent
 from torrent_to_plex.util import config_handler
-
 
 config = config_handler.config
 
@@ -11,7 +10,7 @@ class TvException(Exception):
 
 
 class Tv(Torrent):
-    def __init__(self, torrent_name: str, torrent_dir: str, overrides: dict):
+    def __init__(self, torrent_name: str, torrent_dir: str, overrides: Overrides) -> None:
         super().__init__(torrent_name, torrent_dir, overrides)
         self.videos = self.find_files(
             self.torrent_path,
@@ -19,7 +18,7 @@ class Tv(Torrent):
             depth=2  # To look in season directories for multi-season torrents
         )
 
-    def to_plex(self, library_path: Path, links: bool, overwrite: bool, dry_run: bool):
+    def to_plex(self, library_path: Path, links: bool, overwrite: bool, dry_run: bool) -> None:
         for video in self.videos:
             path = video["path"]
             metadata = video["metadata"]
